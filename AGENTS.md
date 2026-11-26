@@ -17,9 +17,11 @@
 4. **许可证红线**：禁止引入 `AGPL` 或 `GPL-3.0` 等强传染性开源依赖（除非架构评审书面批准并隔离运行）。
 5. **数据变更向后兼容**：数据库或持久化结构变更必须提供向后兼容的 Migration 脚本，禁止单次发布直接删除或重命名线上正在使用的列。
 
-## 3. 项目专属架构红线（新项目初始化时按场景填写）
-> 以下条目由团队在基于模板创建具体项目时补充，并与 `docs/architecture/overview.md` 保持一致：
-- **技术栈与目录边界**：（示例：前后端物理隔离，共享类型统一沉淀在 `packages/shared`）
-- **核心分层约束**：（示例：Controller 仅做路由与入参校验，业务逻辑归属 Service，数据访问归属 Repository）
-- **UI 与交互规范**：（示例：前端统一使用 Element Plus，弹窗与消息提示收口至 `src/utils/feedback.ts`，禁止无作用域覆盖 `.el-*` 全局样式）
-- **默认加载技能**：见 `.agents/skills/` 目录
+## 3. 项目专属架构红线（付款记录小应用）
+> 以下条目与本项目 `docs/architecture/overview.md` 保持一致，所有 Agent 必须遵守：
+- **技术栈与目录边界**：后端 NestJS 11 + TypeScript（Node ≥ 20），业务代码仅位于 `src/modules/payment-records/`；横切能力（统一响应、异常、鉴权、请求 ID）仅在 `src/common/` 维护。MVP 无前端，禁止在本仓库新增 Vue/小程序工程。
+- **核心分层约束**：`controller` 仅做路由、守卫与 DTO 绑定；业务规则（金额换算、排序分页、统计、业务异常）归属 `service`；持久化只允许经 `repository` 访问（当前为版本化 JSON 文件，禁止在 service/controller 内直接 `fs` 读写）。金额一律以「分」为整数存储，禁止用浮点累加金额。
+- **接口与契约规范**：所有业务路由统一前缀 `/api/v1/payment-records`，必须挂 `ApiKeyGuard`；成功响应由全局拦截器包装为 `{ code: 0, message, data, requestId }`，可预期错误必须抛 `BizException(ErrorCode, message)`，禁止手写不一致的外层 JSON 或静默吞异常；入参 DTO 必须使用 `class-validator` 强校验。
+- **数据文件与敏感信息**：数据文件路径统一由 `PAYMENT_DATA_FILE` 配置（默认 `data/payment-records.json`，已 gitignore），接口访问密钥只允许来自 `PAYMENT_API_KEY` 环境变量，禁止硬编码或提交真实密钥；日志禁止打印密钥与完整记录内容。
+- **默认加载技能**：`.agents/skills/nestjs-backend/`、`.agents/skills/security-and-testing/`。
+
