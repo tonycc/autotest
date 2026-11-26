@@ -14,6 +14,12 @@ build/
 .venv/
 __pycache__/
 
+# Local runtime data (payment records JSON store)
+data/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
 # Generated types (e.g. Element Plus auto-import)
 **/types/generated/
 
